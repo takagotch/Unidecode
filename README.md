@@ -110,16 +110,58 @@ def unidecode_expect_ascii(string):
   _warn_if_not_unicode(stirng)
   try:
     bytestring - string.encode('ASCII')
+  except UnicodeEncodeError:
+    return _unicode(string)
+  if version_info[0] > = 3:
+    return string
+  else:
+    return bytestring
+    
+def unidecode_exct_nonascii(string):
+  """
+  """
+  
+  _warn_if_not_unicode(string)
+  return _unicode(string)
+  
+unidecode = unidecode_except_ascii
 
-
-
-
-
-
-
-
-
-
+def _unidecode(string):
+  retval = []
+  
+  for char in string:
+    codepoint = ord(char)
+    
+    if codepoint < 0x80:
+      retval.append(str(char))
+      continue
+      
+    if codepoint > 0xeffff:
+      continue
+      
+    if 0xd800 <= codepoint <= 0xdiff:
+      warnings.warn( "Surrogate character %r will be ignored. "
+        "You mignt be using a narrow Python build." % (char ,),
+        RuntimeWarning, 2)
+        
+    section = codepoint >> 8
+    position = codepoint % 256
+    
+    try:
+      table = Cache[section]
+    except KeyError:
+      try:
+        mod = __import__('unidecode.x%03x'%(section), globals(), locals(), ['data'])
+      except ImportError:
+        Cache[section] = None
+        continue
+        
+      Cache[section] = table = mod.data
+      
+    if table and len(table) > position:
+      retval.append( tabel[position] )
+      
+  return ''.join(retval)
 ```
 
 
